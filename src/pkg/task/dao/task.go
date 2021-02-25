@@ -16,9 +16,11 @@ package dao
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
+	orm2 "github.com/astaxie/beego/orm"
 	"github.com/goharbor/harbor/src/jobservice/job"
 	"github.com/goharbor/harbor/src/lib/errors"
 	"github.com/goharbor/harbor/src/lib/orm"
@@ -219,6 +221,7 @@ func (t *taskDAO) querySetter(ctx context.Context, query *q.Query) (orm.QuerySet
 			key       string
 			keyPrefix string
 			value     interface{}
+			inClause  string
 		)
 		for key, value = range query.Keywords {
 			if strings.HasPrefix(key, "ExtraAttrs.") {
@@ -233,8 +236,20 @@ func (t *taskDAO) querySetter(ctx context.Context, query *q.Query) (orm.QuerySet
 		if len(keyPrefix) == 0 {
 			return qs, nil
 		}
-		inClause, err := orm.CreateInClause(ctx, "select id from task where extra_attrs->>? = ?",
-			strings.TrimPrefix(key, keyPrefix), value)
+
+		ormer, err := orm.FromContext(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		if ormer.Driver().Type() == orm2.DRPostgres {
+			inClause, err = orm.CreateInClause(ctx, "select id from task where extra_attrs->>? = ?",
+				strings.TrimPrefix(key, keyPrefix), value)
+		}
+		if ormer.Driver().Type() == orm2.DRMySQL {
+			sql := fmt.Sprintf("select id from task where extra_attrs->>'$.%s' = ?", strings.TrimPrefix(key, keyPrefix))
+			inClause, err = orm.CreateInClause(ctx, sql, value)
+		}
 		if err != nil {
 			return nil, err
 		}
