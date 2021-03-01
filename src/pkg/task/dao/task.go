@@ -247,7 +247,7 @@ func (t *taskDAO) querySetter(ctx context.Context, query *q.Query) (orm.QuerySet
 				strings.TrimPrefix(key, keyPrefix), value)
 		}
 		if ormer.Driver().Type() == orm2.DRMySQL {
-			sql := fmt.Sprintf("select id from task where extra_attrs->>'$.%s' = ?", strings.TrimPrefix(key, keyPrefix))
+			sql := fmt.Sprintf(`select id from task where extra_attrs->>'$."%s"' = ?`, strings.TrimPrefix(key, keyPrefix))
 			inClause, err = orm.CreateInClause(ctx, sql, value)
 		}
 		if err != nil {
