@@ -295,7 +295,7 @@ func (d *dao) SumBlobsSizeByProject(ctx context.Context, projectID int64, exclud
 	}
 
 	params := []interface{}{projectID}
-	sql := "SELECT SUM(size) FROM `blob` JOIN project_blob ON blob.id = project_blob.blob_id AND project_id = ?"
+	sql := `SELECT SUM(size) FROM blob JOIN project_blob ON blob.id = project_blob.blob_id AND project_id = ?`
 	if excludeForeignLayer {
 		foreignLayerTypes := []interface{}{
 			schema2.MediaTypeForeignLayer,
