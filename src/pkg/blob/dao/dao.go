@@ -294,8 +294,15 @@ func (d *dao) SumBlobsSizeByProject(ctx context.Context, projectID int64, exclud
 		return 0, err
 	}
 
+	var sql string
+	if o.Driver().Type() == orm2.DRPostgres {
+		sql = `SELECT SUM(size) FROM blob JOIN project_blob ON blob.id = project_blob.blob_id AND project_id = ?`
+	}
+	if o.Driver().Type() == orm2.DRMySQL {
+		sql = "SELECT SUM(size) FROM `blob` JOIN project_blob ON `blob`.id = project_blob.blob_id AND project_id = ?"
+	}
+
 	params := []interface{}{projectID}
-	sql := `SELECT SUM(size) FROM blob JOIN project_blob ON blob.id = project_blob.blob_id AND project_id = ?`
 	if excludeForeignLayer {
 		foreignLayerTypes := []interface{}{
 			schema2.MediaTypeForeignLayer,
@@ -335,7 +342,13 @@ func (d *dao) ExistProjectBlob(ctx context.Context, projectID int64, blobDigest 
 		return false, err
 	}
 
-	sql := `SELECT COUNT(*) FROM project_blob JOIN blob ON project_blob.blob_id = blob.id AND project_id = ? AND digest = ?`
+	var sql string
+	if o.Driver().Type() == orm2.DRPostgres {
+		sql = `SELECT COUNT(*) FROM project_blob JOIN blob ON project_blob.blob_id = blob.id AND project_id = ? AND digest = ?`
+	}
+	if o.Driver().Type() == orm2.DRMySQL {
+		sql = "SELECT COUNT(*) FROM project_blob JOIN `blob` ON project_blob.blob_id = `blob`.id AND project_id = ? AND digest = ?"
+	}
 
 	var count int64
 	if err := o.Raw(sql, projectID, blobDigest).QueryRow(&count); err != nil {
@@ -387,7 +400,14 @@ func (d *dao) GetBlobsNotRefedByProjectBlob(ctx context.Context, timeWindowHours
 		return noneRefed, err
 	}
 
-	sql := fmt.Sprintf("SELECT b.id, b.digest, b.content_type, b.status, b.version, b.size FROM `blob` AS b LEFT JOIN project_blob pb ON b.id = pb.blob_id WHERE pb.id IS NULL AND b.update_time <= now() - interval '%d hours';", timeWindowHours)
+	var sql string
+	if ormer.Driver().Type() == orm2.DRPostgres {
+		sql = fmt.Sprintf(`SELECT b.id, b.digest, b.content_type, b.status, b.version, b.size FROM blob AS b LEFT JOIN project_blob pb ON b.id = pb.blob_id WHERE pb.id IS NULL AND b.update_time <= now() - interval '%d hours';`, timeWindowHours)
+	}
+	if ormer.Driver().Type() == orm2.DRMySQL {
+		sql = fmt.Sprintf("SELECT b.id, b.digest, b.content_type, b.status, b.version, b.size FROM `blob` AS b LEFT JOIN project_blob pb ON b.id = pb.blob_id WHERE pb.id IS NULL AND b.update_time <= now() - interval '%d hours';", timeWindowHours)
+	}
+
 	_, err = ormer.Raw(sql).QueryRows(&noneRefed)
 	if err != nil {
 		return noneRefed, err
