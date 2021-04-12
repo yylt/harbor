@@ -16,6 +16,7 @@ package orm
 
 import (
 	"github.com/astaxie/beego/orm"
+	"github.com/go-sql-driver/mysql"
 	"github.com/goharbor/harbor/src/lib/errors"
 	"github.com/lib/pq"
 )
@@ -80,6 +81,10 @@ func isDuplicateKeyError(err error) bool {
 	if errors.As(err, &pqErr) && pqErr.Code == "23505" {
 		return true
 	}
+	var mysqlErr *mysql.MySQLError
+	if errors.As(err, mysqlErr) && mysqlErr.Number == 1062 {
+		return true
+	}
 
 	return false
 }
@@ -87,6 +92,10 @@ func isDuplicateKeyError(err error) bool {
 func isViolatingForeignKeyConstraintError(err error) bool {
 	var pqErr *pq.Error
 	if errors.As(err, &pqErr) && pqErr.Code == "23503" {
+		return true
+	}
+	var mysqlErr *mysql.MySQLError
+	if errors.As(err, mysqlErr) && mysqlErr.Number == 1215 {
 		return true
 	}
 
