@@ -21,6 +21,7 @@ import (
 	"sync"
 	"time"
 
+	orm2 "github.com/astaxie/beego/orm"
 	"github.com/goharbor/harbor/src/jobservice/job"
 	"github.com/goharbor/harbor/src/lib/errors"
 	"github.com/goharbor/harbor/src/lib/log"
@@ -249,6 +250,10 @@ func (e *executionManager) Stop(ctx context.Context, id int64) error {
 		}
 	}
 
+	if e.ormCreator.Create().Driver().Type() == orm2.DRMySQL {
+		return nil
+	}
+
 	// refresh the status explicitly in case that the execution status
 	// isn't refreshed by task status change hook
 	_, _, err = e.executionDAO.RefreshStatus(ctx, id)
@@ -267,6 +272,12 @@ func (e *executionManager) StopAndWait(ctx context.Context, id int64, timeout ti
 			errChan <- err
 			return
 		}
+
+		//由于 mysql 的事务隔离级别是 repeatable_read，此时可能读不到 execution 的 stop 状态。
+		if e.ormCreator.Create().Driver().Type() == orm2.DRMySQL {
+			return
+		}
+
 		// check the status of the execution
 		interval := 100 * time.Millisecond
 		stop := false
