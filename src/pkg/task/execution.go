@@ -21,7 +21,6 @@ import (
 	"sync"
 	"time"
 
-	orm2 "github.com/astaxie/beego/orm"
 	"github.com/goharbor/harbor/src/jobservice/job"
 	"github.com/goharbor/harbor/src/lib/errors"
 	"github.com/goharbor/harbor/src/lib/log"
@@ -248,10 +247,6 @@ func (e *executionManager) Stop(ctx context.Context, id int64) error {
 			log.Errorf("failed to stop task %d: %v", task.ID, err)
 			continue
 		}
-	}
-
-	if e.ormCreator.Create().Driver().Type() == orm2.DRMySQL {
-		return nil
 	}
 
 	// refresh the status explicitly in case that the execution status

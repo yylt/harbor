@@ -17,10 +17,11 @@ package task
 import (
 	"context"
 	"fmt"
-
+	orm2 "github.com/astaxie/beego/orm"
 	"github.com/goharbor/harbor/src/jobservice/job"
 	"github.com/goharbor/harbor/src/lib/errors"
 	"github.com/goharbor/harbor/src/lib/log"
+	"github.com/goharbor/harbor/src/lib/orm"
 	"github.com/goharbor/harbor/src/lib/q"
 	"github.com/goharbor/harbor/src/pkg/task/dao"
 )
@@ -95,6 +96,15 @@ func (h *HookHandler) Handle(ctx context.Context, sc *job.StatusChange) error {
 		if err = fc(ctx, task.ID, sc.Status); err != nil {
 			logger.Errorf("failed to run the task status change post function for task %d: %v", task.ID, err)
 		}
+	}
+
+	ormer, err := orm.FromContext(ctx)
+	if err != nil {
+		logger.Error("should never happen")
+		return nil
+	}
+	if ormer.Driver().Type() == orm2.DRMySQL {
+		return nil
 	}
 
 	// update execution status
