@@ -275,6 +275,7 @@ func (e *executionManager) StopAndWait(ctx context.Context, id int64, timeout ti
 
 		//由于 mysql 的事务隔离级别是 repeatable_read，此时可能读不到 execution 的 stop 状态。
 		if e.ormCreator.Create().Driver().Type() == orm2.DRMySQL {
+			errChan <- nil
 			return
 		}
 
@@ -324,9 +325,11 @@ func (e *executionManager) Delete(ctx context.Context, id int64) error {
 	}
 
 	for _, task := range tasks {
-		if !job.Status(task.Status).Final() {
-			return errors.New(nil).WithCode(errors.PreconditionCode).
-				WithMessage("the execution %d has tasks that aren't in final status, stop the tasks first", id)
+		if e.ormCreator.Create().Driver().Type() != orm2.DRMySQL {
+			if !job.Status(task.Status).Final() {
+				return errors.New(nil).WithCode(errors.PreconditionCode).
+					WithMessage("the execution %d has tasks that aren't in final status, stop the tasks first", id)
+			}
 		}
 		if err = e.taskDAO.Delete(ctx, task.ID); err != nil {
 			// the tasks may be deleted by the other execution deletion operation in the same time(e.g. execution sweeper),
