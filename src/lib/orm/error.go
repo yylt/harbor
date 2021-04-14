@@ -82,7 +82,7 @@ func isDuplicateKeyError(err error) bool {
 		return true
 	}
 	var mysqlErr *mysql.MySQLError
-	if errors.As(err, mysqlErr) && mysqlErr.Number == 1062 {
+	if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
 		return true
 	}
 
@@ -95,7 +95,7 @@ func isViolatingForeignKeyConstraintError(err error) bool {
 		return true
 	}
 	var mysqlErr *mysql.MySQLError
-	if errors.As(err, mysqlErr) && mysqlErr.Number == 1215 {
+	if errors.As(err, &mysqlErr) && mysqlErr.Number == 1215 {
 		return true
 	}
 
