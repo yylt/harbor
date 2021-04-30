@@ -164,7 +164,7 @@ func (p *Project) FilterByMember(ctx context.Context, qs orm.QuerySeter, key str
 	}
 
 	if query.WithPublic {
-		subQuery = fmt.Sprintf("(%s) UNION (SELECT project_id FROM project_metadata WHERE name = 'public' AND value = 'true')", subQuery)
+		subQuery = fmt.Sprintf("%s UNION SELECT project_id FROM project_metadata WHERE name = 'public' AND value = 'true'", subQuery)
 	}
 
 	if len(query.GroupIDs) > 0 {
@@ -173,11 +173,20 @@ func (p *Project) FilterByMember(ctx context.Context, qs orm.QuerySeter, key str
 			elems = append(elems, strconv.Itoa(groupID))
 		}
 
-		tpl := "(%s) UNION (SELECT project_id FROM project_member pm, user_group ug WHERE pm.entity_id = ug.id AND pm.entity_type = 'g' AND ug.id IN (%s))"
+		tpl := "%s UNION SELECT project_id FROM project_member pm, user_group ug WHERE pm.entity_id = ug.id AND pm.entity_type = 'g' AND ug.id IN (%s)"
 		subQuery = fmt.Sprintf(tpl, subQuery, strings.TrimSpace(strings.Join(elems, ", ")))
 	}
 
 	return qs.FilterRaw("project_id", fmt.Sprintf("IN (%s)", subQuery))
+}
+
+func buildInParam(ids []int) string {
+	var sb strings.Builder
+	for _, id := range ids {
+		(&sb).WriteString(fmt.Sprintf("%d,", id))
+	}
+	result := (&sb).String()
+	return result[:len(result) - 1]
 }
 
 func isTrue(i interface{}) bool {
