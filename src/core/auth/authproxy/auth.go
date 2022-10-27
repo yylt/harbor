@@ -142,15 +142,23 @@ func (a *Auth) OnBoardUser(ctx context.Context, u *models.User) error {
 
 // PostAuthenticate generates the user model and on board the user.
 func (a *Auth) PostAuthenticate(ctx context.Context, u *models.User) error {
-	_, err := a.userMgr.GetByName(ctx, u.Username)
+	modelu, err := a.userMgr.GetByName(ctx, u.Username)
 	if harborErrors.IsNotFoundErr(err) {
 		if err2 := a.fillInModel(u); err2 != nil {
 			return err2
 		}
-		return a.OnBoardUser(ctx, u)
+		err = a.OnBoardUser(ctx, u)
+		if err != nil {
+			return err
+		}
+		modelu, err = a.userMgr.GetByName(ctx, u.Username)
 	} else if err != nil {
 		return err
 	}
+	if err != nil {
+		return err
+	}
+	u.UserID = modelu.UserID
 	// do nothing if user exists in DB
 	return nil
 }

@@ -65,7 +65,7 @@ var (
 	ConfigList = []Item{
 
 		{Name: common.AdminInitialPassword, Scope: SystemScope, Group: BasicGroup, EnvKey: "HARBOR_ADMIN_PASSWORD", DefaultValue: "", ItemType: &PasswordType{}, Editable: true},
-		{Name: common.AUTHMode, Scope: UserScope, Group: BasicGroup, EnvKey: "AUTH_MODE", DefaultValue: "db_auth", ItemType: &AuthModeType{}, Editable: false, Description: `The auth mode of current system, such as "db_auth", "ldap_auth", "oidc_auth"`},
+		{Name: common.AUTHMode, Scope: SystemScope, Group: BasicGroup, EnvKey: "AUTH_MODE", DefaultValue: "db_auth", ItemType: &AuthModeType{}, Editable: false, Description: `The auth mode of current system, such as "db_auth", "ldap_auth", "oidc_auth"`},
 		{Name: common.ChartRepoURL, Scope: SystemScope, Group: BasicGroup, EnvKey: "CHART_REPOSITORY_URL", DefaultValue: "http://chartmuseum:9999", ItemType: &StringType{}, Editable: false},
 
 		{Name: common.TrivyAdapterURL, Scope: SystemScope, Group: TrivyGroup, EnvKey: "TRIVY_ADAPTER_URL", DefaultValue: "http://trivy-adapter:8080", ItemType: &StringType{}, Editable: false},
@@ -130,13 +130,13 @@ var (
 		{Name: common.UAAEndpoint, Scope: UserScope, Group: UAAGroup, EnvKey: "UAA_ENDPOINT", DefaultValue: "", ItemType: &StringType{}, Editable: false, Description: `The endpoint of the UAA`},
 		{Name: common.UAAVerifyCert, Scope: UserScope, Group: UAAGroup, EnvKey: "UAA_VERIFY_CERT", DefaultValue: "false", ItemType: &BoolType{}, Editable: false, Description: `Verify the certificate in UAA server`},
 
-		{Name: common.HTTPAuthProxyEndpoint, Scope: UserScope, Group: HTTPAuthGroup, ItemType: &StringType{}, Description: `The endpoint of the HTTP auth`},
-		{Name: common.HTTPAuthProxyTokenReviewEndpoint, Scope: UserScope, Group: HTTPAuthGroup, ItemType: &StringType{}, Description: `The token review endpoint`},
-		{Name: common.HTTPAuthProxyAdminGroups, Scope: UserScope, Group: HTTPAuthGroup, ItemType: &StringType{}, Description: `The group which has the harbor admin privileges`},
-		{Name: common.HTTPAuthProxyAdminUsernames, Scope: UserScope, Group: HTTPAuthGroup, ItemType: &StringType{}, Description: `The username which has the harbor admin privileges`},
-		{Name: common.HTTPAuthProxyVerifyCert, Scope: UserScope, Group: HTTPAuthGroup, DefaultValue: "true", ItemType: &BoolType{}, Description: `Verify the HTTP auth provider's certificate`},
-		{Name: common.HTTPAuthProxySkipSearch, Scope: UserScope, Group: HTTPAuthGroup, DefaultValue: "false", ItemType: &BoolType{}, Description: `Search user before onboard`},
-		{Name: common.HTTPAuthProxyServerCertificate, Scope: UserScope, Group: HTTPAuthGroup, ItemType: &StringType{}, Description: `The certificate of the HTTP auth provider`},
+		{Name: common.HTTPAuthProxyEndpoint, Scope: SystemScope, Group: BasicGroup, EnvKey: "HTTP_AUTHPROXY_ENDPOINT", DefaultValue: "", ItemType: &StringType{}, Editable: false, Description: `The endpoint of the HTTP auth`},
+		{Name: common.HTTPAuthProxyTokenReviewEndpoint, Scope: SystemScope, Group: BasicGroup, EnvKey: "HTTP_AUTHPROXY_TOKENREVIEW_ENDPOINT", DefaultValue: "", ItemType: &StringType{}, Description: `The token review endpoint`},
+		{Name: common.HTTPAuthProxyAdminGroups, Scope: SystemScope, Group: BasicGroup, EnvKey: "HTTP_AUTHPROXY_ADMIN_GROUPS", DefaultValue: "", ItemType: &StringType{}, Description: `The group which has the harbor admin privileges`},
+		{Name: common.HTTPAuthProxyAdminUsernames, Scope: SystemScope, Group: BasicGroup, EnvKey: "HTTP_AUTHPROXY_ADMIN_USERNAMES", DefaultValue: "", ItemType: &StringType{}, Description: `The username which has the harbor admin privileges`},
+		{Name: common.HTTPAuthProxyVerifyCert, Scope: SystemScope, Group: BasicGroup, EnvKey: "HTTP_AUTHPROXY_VERIFY_CERT", DefaultValue: "false", ItemType: &BoolType{}, Description: `Verify the HTTP auth provider's certificate`},
+		{Name: common.HTTPAuthProxySkipSearch, Scope: SystemScope, Group: BasicGroup, EnvKey: "HTTP_AUTHPROXY_SKIP_SEARCH", DefaultValue: "true", ItemType: &BoolType{}, Description: `Search user before onboard`},
+		{Name: common.HTTPAuthProxyServerCertificate, Scope: SystemScope, Group: BasicGroup, EnvKey: "HTTP_AUTHPROXY_SERVER_CERTIFICATE", DefaultValue: "", ItemType: &StringType{}, Description: `The certificate of the HTTP auth provider`},
 
 		{Name: common.OIDCName, Scope: UserScope, Group: OIDCGroup, ItemType: &StringType{}, Description: `The OIDC provider name`},
 		{Name: common.OIDCEndpoint, Scope: UserScope, Group: OIDCGroup, ItemType: &StringType{}, Description: `The endpoint of the OIDC provider`},

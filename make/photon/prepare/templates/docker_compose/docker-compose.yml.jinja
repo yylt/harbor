@@ -1,28 +1,19 @@
 version: '2.3'
 services:
-  log:
-    image: goharbor/harbor-log:{{version}}
-    container_name: harbor-log
+  authp:
+    image: yylt/authproxy:{{reg_version}}
+    container_name: authp
     restart: always
-    cap_drop:
-      - ALL
-    cap_add:
-      - CHOWN
-      - DAC_OVERRIDE
-      - SETGID
-      - SETUID
-    volumes:
-      - {{log_location}}/:/var/log/docker/:z
-      - type: bind
-        source: ./common/config/log/logrotate.conf
-        target: /etc/logrotate.d/logrotate.conf
-      - type: bind
-        source: ./common/config/log/rsyslog_docker.conf
-        target: /etc/rsyslog.d/rsyslog_docker.conf
-    ports:
-      - 127.0.0.1:1514:10514
+    env_file:
+      - ./common/config/core/env
     networks:
       - harbor
+    command:
+      - /authproxy
+      - -l 
+      - http://{{hostname}}:9011/teledb-dcp/v1/api/login 
+      - -t 
+      - http://{{hostname}}:9011/teledb-dcp/v1/currentuser/info
   registry:
     image: goharbor/registry-photon:{{reg_version}}
     container_name: registry
@@ -60,13 +51,6 @@ services:
 {% endif %}
     networks:
       - harbor
-    depends_on:
-      - log
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://localhost:1514"
-        tag: "registry"
   registryctl:
     image: goharbor/harbor-registryctl:{{version}}
     container_name: registryctl
@@ -103,13 +87,6 @@ services:
 {% endif %}
     networks:
       - harbor
-    depends_on:
-      - log
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://localhost:1514"
-        tag: "registryctl"
 {% if external_database == False %}
   postgresql:
     image: goharbor/harbor-db:{{version}}
@@ -133,17 +110,10 @@ services:
   {% endif %}
     env_file:
       - ./common/config/db/env
-    depends_on:
-      - log
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://localhost:1514"
-        tag: "postgresql"
     shm_size: '1gb'
 {% endif %}
   core:
-    image: goharbor/harbor-core:{{version}}
+    image: yylt/harbor-core:{{version}}
     container_name: harbor-core
     env_file:
       - ./common/config/core/env
@@ -193,7 +163,6 @@ services:
           - harbor-core
 {% endif %}
     depends_on:
-      - log
       - registry
 {% if external_redis == False %}
       - redis
@@ -201,11 +170,6 @@ services:
 {% if external_database == False %}
       - postgresql
 {% endif %}
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://localhost:1514"
-        tag: "core"
   portal:
     image: goharbor/harbor-portal:{{version}}
     container_name: harbor-portal
@@ -231,14 +195,6 @@ services:
 {% endif %}
     networks:
       - harbor
-    depends_on:
-      - log
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://localhost:1514"
-        tag: "portal"
-
   jobservice:
     image: goharbor/harbor-jobservice:{{version}}
     container_name: harbor-jobservice
@@ -272,11 +228,6 @@ services:
       - harbor
     depends_on:
       - core
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://localhost:1514"
-        tag: "jobservice"
 {% if external_redis == False %}
   redis:
     image: goharbor/redis-photon:{{redis_version}}
@@ -297,13 +248,6 @@ services:
         aliases:
           - redis
   {% endif %}
-    depends_on:
-      - log
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://localhost:1514"
-        tag: "redis"
 {% endif %}
   proxy:
     image: goharbor/nginx-photon:{{version}}
@@ -352,12 +296,6 @@ services:
       - registry
       - core
       - portal
-      - log
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://localhost:1514"
-        tag: "proxy"
 {% if with_notary %}
   notary-server:
     image: goharbor/notary-server-photon:{{notary_version}}
@@ -428,15 +366,9 @@ services:
     env_file:
       - ./common/config/notary/signer_env
     depends_on:
-      - log
   {% if external_database == False %}
       - postgresql
   {% endif %}
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://localhost:1514"
-        tag: "notary-signer"
 {% endif %}
 {% if with_trivy %}
   trivy-adapter:
@@ -445,9 +377,8 @@ services:
     restart: always
     cap_drop:
       - ALL
-    depends_on:
-      - log
 {% if external_redis == False %}
+    depends_on:
       - redis
 {% endif %}
     networks:
@@ -470,11 +401,6 @@ services:
         source: {{internal_tls.trivy_adapter_key_path}}
         target: /etc/harbor/ssl/trivy_adapter.key
 {% endif %}
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://localhost:1514"
-        tag: "trivy-adapter"
     env_file:
       ./common/config/trivy-adapter/env
 {% endif %}
@@ -492,8 +418,6 @@ services:
       - SETUID
     networks:
       - harbor-chartmuseum
-    depends_on:
-      - log
     volumes:
       - {{data_volume}}/chart_storage:/chart_storage:z
       - ./common/config/chartserver:/etc/chartserver:z
@@ -513,11 +437,6 @@ services:
         source: {{gcs_keyfile}}
         target: /etc/chartserver/gcs.key
 {% endif %}
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://localhost:1514"
-        tag: "chartmuseum"
     env_file:
       ./common/config/chartserver/env
 {% endif %}
@@ -539,11 +458,6 @@ services:
       - type: bind
         source: ./common/config/shared/trust-certificates
         target: /harbor_cust_cert
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://localhost:1514"
-        tag: "exporter"
 {% endif %}
 networks:
   harbor:

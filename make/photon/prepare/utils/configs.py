@@ -150,12 +150,12 @@ def parse_yaml_config(config_file_path, with_notary, with_trivy, with_chartmuseu
     db_configs = configs.get('database')
     if db_configs:
         # harbor db
-        config_dict['harbor_db_host'] = 'postgresql'
-        config_dict['harbor_db_port'] = 5432
-        config_dict['harbor_db_name'] = 'registry'
-        config_dict['harbor_db_username'] = 'postgres'
+        config_dict['harbor_db_host'] = db_configs.get("host") or 'postgresql'
+        config_dict['harbor_db_port'] = db_configs.get("port") or 5432
+        config_dict['harbor_db_name'] = db_configs.get("database") or 'registry'
+        config_dict['harbor_db_username'] = db_configs.get("user") or 'postgres'
         config_dict['harbor_db_password'] = db_configs.get("password") or ''
-        config_dict['harbor_db_sslmode'] = 'disable'
+        config_dict['harbor_db_sslmode'] = db_configs.get("sslmode") or 'disable'
         config_dict['harbor_db_max_idle_conns'] = db_configs.get("max_idle_conns") or default_db_max_idle_conns
         config_dict['harbor_db_max_open_conns'] = db_configs.get("max_open_conns") or default_db_max_open_conns
 

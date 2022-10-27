@@ -13,6 +13,7 @@ def prepare_docker_compose(configs, with_trivy, with_notary, with_chartmuseum):
     VERSION_TAG = versions.get('VERSION_TAG') or 'dev'
 
     rendering_variables = {
+        'hostname': configs['hostname'],
         'version': VERSION_TAG,
         'reg_version': VERSION_TAG,
         'redis_version': VERSION_TAG,

@@ -27,6 +27,8 @@ import (
 
 type basicAuth struct{}
 
+const JWTTOKEN = "jwt_token"
+
 func trueClientIPHeaderName() string {
 	// because the true client IP header varies based on the foreground proxy/lb settings,
 	// make it configurable by env
@@ -59,15 +61,23 @@ func GetUserAgent(r *http.Request) string {
 
 func (b *basicAuth) Generate(req *http.Request) security.Context {
 	log := log.G(req.Context())
+	var (
+		err    error
+		jtoken *http.Cookie
+		user   *models.User
+	)
+	jtoken, err = req.Cookie(JWTTOKEN)
 	username, password, ok := req.BasicAuth()
-	if !ok {
+	if !ok && err != nil {
 		return nil
 	}
-	user, err := auth.Login(req.Context(), models.AuthModel{
+	if err == nil {
+		password = jtoken.Value
+	}
+	user, err = auth.Login(req.Context(), models.AuthModel{
 		Principal: username,
 		Password:  password,
 	})
-
 	if err != nil {
 		log.WithField("client IP", GetClientIP(req)).WithField("user agent", GetUserAgent(req)).Errorf("failed to authenticate user:%s, error:%v", username, err)
 		return nil

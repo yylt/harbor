@@ -174,7 +174,7 @@ func (c *controller) ConvertForGet(ctx context.Context, cfg map[string]interface
 	for _, item := range mList {
 		val, exist := cfg[item.Name]
 		// skip undefined items
-		if !exist {
+		if !exist && item.EnvKey != common.AUTHMode {
 			continue
 		}
 
@@ -208,6 +208,11 @@ func (c *controller) ConvertForGet(ctx context.Context, cfg map[string]interface
 	canBeModified, err := c.authModeCanBeModified(ctx)
 	if err != nil {
 		return nil, err
+	}
+	if _, ok := result[common.AUTHMode]; !ok {
+		result[common.AUTHMode] = &models.Value{
+			Editable: false,
+		}
 	}
 	result[common.AUTHMode].Editable = canBeModified && !readOnlyForAll
 

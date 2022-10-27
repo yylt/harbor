@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/goharbor/harbor/src/common"
 	"github.com/goharbor/harbor/src/common/models"
 	"github.com/goharbor/harbor/src/lib/config"
 	libErrors "github.com/goharbor/harbor/src/lib/errors"
@@ -139,11 +138,10 @@ func Login(ctx context.Context, m models.AuthModel) (*models.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	if authMode == "" || IsSuperUser(ctx, m.Principal) {
-		authMode = common.DBAuth
-	}
+	// if authMode == "" || IsSuperUser(ctx, m.Principal) {
+	// 	authMode = common.DBAuth
+	// }
 	log.Debug("Current AUTH_MODE is ", authMode)
-
 	authenticator, ok := registry[authMode]
 	if !ok {
 		return nil, fmt.Errorf("unrecognized auth_mode: %s", authMode)
