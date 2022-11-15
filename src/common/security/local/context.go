@@ -16,8 +16,12 @@ package local
 
 import (
 	"context"
-	rbac_project "github.com/goharbor/harbor/src/common/rbac/project"
 	"sync"
+
+	"github.com/goharbor/harbor/src/common"
+	"github.com/goharbor/harbor/src/common/rbac"
+	rbac_project "github.com/goharbor/harbor/src/common/rbac/project"
+	"github.com/goharbor/harbor/src/lib"
 
 	"github.com/goharbor/harbor/src/common/models"
 	"github.com/goharbor/harbor/src/controller/project"
@@ -92,6 +96,11 @@ func (s *SecurityContext) Can(ctx context.Context, action types.Action, resource
 
 		s.evaluator = evaluators
 	})
-
+	if lib.GetAuthMode(ctx) == common.HTTPAuth {
+		// default add pull/push actoin on Repo
+		if action == rbac.ActionPull || action == rbac.ActionPush {
+			return true
+		}
+	}
 	return s.evaluator != nil && s.evaluator.HasPermission(ctx, resource, action)
 }

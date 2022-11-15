@@ -62,7 +62,7 @@ var (
 	ConfigList = []Item{
 
 		{Name: common.AdminInitialPassword, Scope: SystemScope, Group: BasicGroup, EnvKey: "HARBOR_ADMIN_PASSWORD", DefaultValue: "", ItemType: &PasswordType{}, Editable: true},
-		{Name: common.AUTHMode, Scope: UserScope, Group: BasicGroup, EnvKey: "AUTH_MODE", DefaultValue: "db_auth", ItemType: &AuthModeType{}, Editable: false},
+		{Name: common.AUTHMode, Scope: SystemScope, Group: BasicGroup, EnvKey: "AUTH_MODE", DefaultValue: "db_auth", ItemType: &AuthModeType{}, Editable: false},
 		{Name: common.ChartRepoURL, Scope: SystemScope, Group: BasicGroup, EnvKey: "CHART_REPOSITORY_URL", DefaultValue: "http://chartmuseum:9999", ItemType: &StringType{}, Editable: false},
 
 		{Name: common.TrivyAdapterURL, Scope: SystemScope, Group: TrivyGroup, EnvKey: "TRIVY_ADAPTER_URL", DefaultValue: "http://trivy-adapter:8080", ItemType: &StringType{}, Editable: false},
@@ -135,12 +135,12 @@ var (
 		{Name: common.UAAEndpoint, Scope: UserScope, Group: UAAGroup, EnvKey: "UAA_ENDPOINT", DefaultValue: "", ItemType: &StringType{}, Editable: false},
 		{Name: common.UAAVerifyCert, Scope: UserScope, Group: UAAGroup, EnvKey: "UAA_VERIFY_CERT", DefaultValue: "false", ItemType: &BoolType{}, Editable: false},
 
-		{Name: common.HTTPAuthProxyEndpoint, Scope: UserScope, Group: HTTPAuthGroup, ItemType: &StringType{}},
-		{Name: common.HTTPAuthProxyTokenReviewEndpoint, Scope: UserScope, Group: HTTPAuthGroup, ItemType: &StringType{}},
-		{Name: common.HTTPAuthProxyAdminGroups, Scope: UserScope, Group: HTTPAuthGroup, ItemType: &StringType{}},
-		{Name: common.HTTPAuthProxyVerifyCert, Scope: UserScope, Group: HTTPAuthGroup, DefaultValue: "true", ItemType: &BoolType{}},
-		{Name: common.HTTPAuthProxySkipSearch, Scope: UserScope, Group: HTTPAuthGroup, DefaultValue: "false", ItemType: &BoolType{}},
-		{Name: common.HTTPAuthProxyServerCertificate, Scope: UserScope, Group: HTTPAuthGroup, ItemType: &StringType{}},
+		{Name: common.HTTPAuthProxyEndpoint, Scope: SystemScope, Group: BasicGroup, EnvKey: "HTTP_AUTHPROXY_ENDPOINT", DefaultValue: "", ItemType: &StringType{}, Editable: false},
+		{Name: common.HTTPAuthProxyTokenReviewEndpoint, Scope: SystemScope, Group: BasicGroup, EnvKey: "HTTP_AUTHPROXY_TOKENREVIEW_ENDPOINT", DefaultValue: "", ItemType: &StringType{}},
+		{Name: common.HTTPAuthProxyAdminGroups, Scope: SystemScope, Group: BasicGroup, EnvKey: "HTTP_AUTHPROXY_ADMIN_GROUPS", DefaultValue: "", ItemType: &StringType{}},
+		{Name: common.HTTPAuthProxyVerifyCert, Scope: SystemScope, Group: BasicGroup, EnvKey: "HTTP_AUTHPROXY_VERIFY_CERT", DefaultValue: "false", ItemType: &BoolType{}},
+		{Name: common.HTTPAuthProxySkipSearch, Scope: SystemScope, Group: BasicGroup, EnvKey: "HTTP_AUTHPROXY_SKIP_SEARCH", DefaultValue: "true", ItemType: &BoolType{}},
+		{Name: common.HTTPAuthProxyServerCertificate, Scope: SystemScope, Group: BasicGroup, EnvKey: "HTTP_AUTHPROXY_SERVER_CERTIFICATE", DefaultValue: "", ItemType: &StringType{}},
 
 		{Name: common.OIDCName, Scope: UserScope, Group: OIDCGroup, ItemType: &StringType{}},
 		{Name: common.OIDCEndpoint, Scope: UserScope, Group: OIDCGroup, ItemType: &StringType{}},

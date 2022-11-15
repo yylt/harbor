@@ -1,32 +1,22 @@
 version: '2.3'
 services:
-  log:
-    image: goharbor/harbor-log:{{version}}
-    container_name: harbor-log
+  authp:
+    image: yylt/authproxy:v2.6.1
+    container_name: yyauthp
     restart: always
-    dns_search: .
-    cap_drop:
-      - ALL
-    cap_add:
-      - CHOWN
-      - DAC_OVERRIDE
-      - SETGID
-      - SETUID
-    volumes:
-      - {{log_location}}/:/var/log/docker/:z
-      - type: bind
-        source: ./common/config/log/logrotate.conf
-        target: /etc/logrotate.d/logrotate.conf
-      - type: bind
-        source: ./common/config/log/rsyslog_docker.conf
-        target: /etc/rsyslog.d/rsyslog_docker.conf
-    ports:
-      - 127.0.0.1:1514:10514
+    env_file:
+      - ./common/config/core/env
     networks:
       - harbor
+    command:
+      - /authproxy
+      - -l 
+      - http://{{hostname}}:9011/teledb-dcp/v1/api/login 
+      - -t 
+      - http://{{hostname}}:9011/teledb-dcp/v1/currentuser/info
   registry:
     image: goharbor/registry-photon:{{reg_version}}
-    container_name: registry
+    container_name: yyregistry
     restart: always
     cap_drop:
       - ALL
@@ -43,11 +33,6 @@ services:
       - type: bind
         source: ./common/config/shared/trust-certificates
         target: /harbor_cust_cert
-{% if gcs_keyfile %}
-      - type: bind
-        source: {{gcs_keyfile}}
-        target: /etc/registry/gcs.key
-{% endif %}
 {%if internal_tls.enabled %}
       - type: bind
         source: {{internal_tls.core_crt_path}}
@@ -61,17 +46,9 @@ services:
 {% endif %}
     networks:
       - harbor
-    dns_search: .
-    depends_on:
-      - log
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://127.0.0.1:1514"
-        tag: "registry"
   registryctl:
     image: goharbor/harbor-registryctl:{{version}}
-    container_name: registryctl
+    container_name: yyregistryctl
     env_file:
       - ./common/config/registryctl/env
     restart: always
@@ -90,11 +67,6 @@ services:
       - type: bind
         source: ./common/config/shared/trust-certificates
         target: /harbor_cust_cert
-{% if gcs_keyfile %}
-      - type: bind
-        source: {{gcs_keyfile}}
-        target: /etc/registry/gcs.key
-{% endif %}
 {%if internal_tls.enabled %}
       - type: bind
         source: {{internal_tls.registryctl_crt_path}}
@@ -105,19 +77,11 @@ services:
 {% endif %}
     networks:
       - harbor
-    dns_search: .
-    depends_on:
-      - log
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://127.0.0.1:1514"
-        tag: "registryctl"
 {% if external_database == False %}
 {% if harbor_db_postgresql %}
   postgresql:
     image: goharbor/harbor-db:{{version}}
-    container_name: harbor-db
+    container_name: yyharbor-db
     restart: always
     cap_drop:
       - ALL
@@ -148,8 +112,8 @@ services:
 {% endif %}
 {% if harbor_db_mysql %}
   mysql:
-    image: goharbor/harbor-db-mysql:{{version}}
-    container_name: harbor-db-mysql
+    image: yylt/harbor-mysql:{{version}}
+    container_name: yyharbor-db-mysql
     restart: always
     networks:
       harbor:
@@ -158,18 +122,11 @@ services:
       - ./common/config/db_mysql/env
     volumes:
       - {{data_volume}}/mysql:/var/lib/mysql:z
-    depends_on:
-      - log
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://127.0.0.1:1514"
-        tag: "mysql"
 {% endif %}
 {% endif %}
   core:
     image: goharbor/harbor-core:{{version}}
-    container_name: harbor-core
+    container_name: yyharbor-core
     env_file:
       - ./common/config/core/env
     restart: always
@@ -219,7 +176,6 @@ services:
 {% endif %}
     dns_search: .
     depends_on:
-      - log
       - registry
 {% if external_redis == False %}
       - redis
@@ -232,14 +188,9 @@ services:
       - mysql
   {% endif %}
 {% endif %}
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://127.0.0.1:1514"
-        tag: "core"
   portal:
     image: goharbor/harbor-portal:{{version}}
-    container_name: harbor-portal
+    container_name: yyharbor-portal
     restart: always
     cap_drop:
       - ALL
@@ -263,17 +214,9 @@ services:
     networks:
       - harbor
     dns_search: .
-    depends_on:
-      - log
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://127.0.0.1:1514"
-        tag: "portal"
-
   jobservice:
     image: goharbor/harbor-jobservice:{{version}}
-    container_name: harbor-jobservice
+    container_name: yyharbor-jobservice
     env_file:
       - ./common/config/jobservice/env
     restart: always
@@ -302,17 +245,10 @@ services:
     networks:
       - harbor
     dns_search: .
-    depends_on:
-      - core
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://127.0.0.1:1514"
-        tag: "jobservice"
 {% if external_redis == False %}
   redis:
-    image: goharbor/redis-photon:{{redis_version}}
-    container_name: redis
+    image: goharbor/redis-photon:v2.6.1
+    container_name: yyredis
     restart: always
     cap_drop:
       - ALL
@@ -330,17 +266,10 @@ services:
           - redis
   {% endif %}
     dns_search: .
-    depends_on:
-      - log
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://127.0.0.1:1514"
-        tag: "redis"
 {% endif %}
   proxy:
     image: goharbor/nginx-photon:{{version}}
-    container_name: nginx
+    container_name: yynginx
     restart: always
     cap_drop:
       - ALL
@@ -386,16 +315,10 @@ services:
       - registry
       - core
       - portal
-      - log
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://127.0.0.1:1514"
-        tag: "proxy"
 {% if with_notary %}
   notary-server:
     image: goharbor/notary-server-photon:{{notary_version}}
-    container_name: notary-server
+    container_name: yynotary-server
     restart: always
     networks:
       - notary-sig
@@ -439,7 +362,7 @@ services:
         tag: "notary-server"
   notary-signer:
     image: goharbor/notary-signer-photon:{{notary_version}}
-    container_name: notary-signer
+    container_name: yynotary-signer
     restart: always
     networks:
       harbor-notary:
@@ -469,7 +392,6 @@ services:
     env_file:
       - ./common/config/notary/signer_env
     depends_on:
-      - log
   {% if external_database == False %}
     {% if harbor_db_postgresql %}
       - postgresql
@@ -478,22 +400,16 @@ services:
       - mysql
     {% endif %}
   {% endif %}
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://127.0.0.1:1514"
-        tag: "notary-signer"
 {% endif %}
 {% if with_trivy %}
   trivy-adapter:
-    container_name: trivy-adapter
+    container_name: yytrivy-adapter
     image: goharbor/trivy-adapter-photon:{{trivy_adapter_version}}
     restart: always
     cap_drop:
       - ALL
     dns_search: .
     depends_on:
-      - log
 {% if external_redis == False %}
       - redis
 {% endif %}
@@ -517,17 +433,12 @@ services:
         source: {{internal_tls.trivy_adapter_key_path}}
         target: /etc/harbor/ssl/trivy_adapter.key
 {% endif %}
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://127.0.0.1:1514"
-        tag: "trivy-adapter"
     env_file:
       ./common/config/trivy-adapter/env
 {% endif %}
 {% if with_chartmuseum %}
   chartmuseum:
-    container_name: chartmuseum
+    container_name: yychartmuseum
     image: goharbor/chartmuseum-photon:{{chartmuseum_version}}
     restart: always
     cap_drop:
@@ -538,10 +449,8 @@ services:
       - SETGID
       - SETUID
     networks:
-      - harbor-chartmuseum
+      - harbor
     dns_search: .
-    depends_on:
-      - log
     volumes:
       - {{data_volume}}/chart_storage:/chart_storage:z
       - ./common/config/chartserver:/etc/chartserver:z
@@ -556,23 +465,13 @@ services:
         source: {{internal_tls.chartmuseum_key_path}}
         target: /etc/harbor/ssl/chartmuseum.key
 {% endif %}
-{% if gcs_keyfile %}
-      - type: bind
-        source: {{gcs_keyfile}}
-        target: /etc/chartserver/gcs.key
-{% endif %}
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://127.0.0.1:1514"
-        tag: "chartmuseum"
     env_file:
       ./common/config/chartserver/env
 {% endif %}
 {% if metric.enabled %}
   exporter:
     image: goharbor/harbor-exporter:{{version}}
-    container_name: harbor-exporter
+    container_name: yyharbor-exporter
     env_file:
       - ./common/config/exporter/env
     restart: always
@@ -593,22 +492,7 @@ services:
       - type: bind
         source: ./common/config/shared/trust-certificates
         target: /harbor_cust_cert
-    logging:
-      driver: "syslog"
-      options:
-        syslog-address: "tcp://127.0.0.1:1514"
-        tag: "exporter"
 {% endif %}
 networks:
   harbor:
     external: false
-{% if with_notary %}
-  harbor-notary:
-    external: false
-  notary-sig:
-    external: false
-{% endif %}
-{% if with_chartmuseum %}
-  harbor-chartmuseum:
-    external: false
-{% endif %}

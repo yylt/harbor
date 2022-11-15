@@ -19,8 +19,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/goharbor/harbor/src/common"
-	"github.com/goharbor/harbor/src/common/dao"
 	"github.com/goharbor/harbor/src/common/models"
 	"github.com/goharbor/harbor/src/core/config"
 	"github.com/goharbor/harbor/src/lib/log"
@@ -133,9 +131,9 @@ func Login(m models.AuthModel) (*models.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	if authMode == "" || dao.IsSuperUser(m.Principal) {
-		authMode = common.DBAuth
-	}
+	// if authMode == "" || dao.IsSuperUser(m.Principal) {
+	// 	authMode = common.DBAuth
+	// }
 	log.Debug("Current AUTH_MODE is ", authMode)
 
 	authenticator, ok := registry[authMode]

@@ -26,13 +26,24 @@ import (
 
 type basicAuth struct{}
 
+const JWTTOKEN = "jwt_token"
+
 func (b *basicAuth) Generate(req *http.Request) security.Context {
 	log := log.G(req.Context())
+	var (
+		err    error
+		jtoken *http.Cookie
+		user   *models.User
+	)
+	jtoken, err = req.Cookie(JWTTOKEN)
 	username, password, ok := req.BasicAuth()
-	if !ok {
+	if !ok && err != nil {
 		return nil
 	}
-	user, err := auth.Login(models.AuthModel{
+	if err == nil {
+		password = jtoken.Value
+	}
+	user, err = auth.Login(models.AuthModel{
 		Principal: username,
 		Password:  password,
 	})

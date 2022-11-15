@@ -29,9 +29,9 @@ old_private_key_pem_path, old_crt_path)
 
 @click.command()
 @click.option('--conf', default=input_config_path, help="the path of Harbor configuration file")
-@click.option('--with-notary', is_flag=True, help="the Harbor instance is to be deployed with notary")
-@click.option('--with-trivy', is_flag=True, help="the Harbor instance is to be deployed with Trivy")
-@click.option('--with-chartmuseum', is_flag=True, help="the Harbor instance is to be deployed with chart repository supporting")
+@click.option('--with-notary', is_flag=False, help="the Harbor instance is to be deployed with notary")
+@click.option('--with-trivy', is_flag=False, help="the Harbor instance is to be deployed with Trivy")
+@click.option('--with-chartmuseum', is_flag=False, help="the Harbor instance is to be deployed with chart repository supporting")
 def prepare(conf, with_notary, with_trivy, with_chartmuseum):
 
     delfile(config_dir)

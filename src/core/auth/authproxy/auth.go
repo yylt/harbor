@@ -20,12 +20,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/goharbor/harbor/src/jobservice/logger"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/goharbor/harbor/src/jobservice/logger"
 
 	"github.com/goharbor/harbor/src/common/dao/group"
 
